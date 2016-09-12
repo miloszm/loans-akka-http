@@ -1,12 +1,13 @@
 package com.mm
 
-import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import com.mm.model.{Loan, LoanRequest}
+import services.{InMemoryLoanRepository, LoanRepository, RandomIdGenerator}
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
@@ -16,16 +17,18 @@ import scala.io.StdIn
 
 
 object WebServer {
-  final case class Loan(amount:Int)
-  def saveLoan(loan:Loan):Future[Done] = Future.successful(Done)
-  implicit val loanFormat = jsonFormat1(Loan)
+  def saveLoan(loanRequest:LoanRequest)(implicit repo:LoanRepository):Future[Loan] = {
+    val loan = repo.storeLoan(loanRequest)
+    Future.successful(loan)
+  }
+  implicit val loanFormat = jsonFormat2(LoanRequest)
 
 
   def main(args: Array[String]): Unit = {
     implicit val system = ActorSystem("mm-actor-system")
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
-
+    implicit val repo = new InMemoryLoanRepository(new RandomIdGenerator)
 
     val route =
       get {
@@ -35,10 +38,10 @@ object WebServer {
       } ~
       post {
         pathPrefix("loans") {
-          entity(as[Loan]) { loan =>
-            val saved: Future[Done] = saveLoan(loan)
-            onComplete(saved) { done =>
-              complete(s"loan created for ${loan.amount}")
+          entity(as[LoanRequest]) { loanRequest =>
+            val saved: Future[Loan] = saveLoan(loanRequest)
+            onComplete(saved) { x =>
+              complete(s"loan created: $x")
             }
           }
         }

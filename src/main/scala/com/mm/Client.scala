@@ -21,7 +21,7 @@ object Client {
 
   def doLoanCreation(): Unit = {
 
-    val requestEntity = HttpEntity(ContentTypes.`application/json`,"{\"amount\": 145}")
+    val requestEntity = HttpEntity(ContentTypes.`application/json`,"{\"amount\": 145, \"durationInDays\": 365}")
 
     val connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
       Http().outgoingConnection("127.0.0.1", 8080)
@@ -30,7 +30,7 @@ object Client {
         .via(connectionFlow)
         .runWith(Sink.head)
     responseFuture.andThen {
-      case Success(x) => println(s"request succeded: $x")
+      case Success(x) => println(s"request succeeded: $x")
       case Failure(_) => println("request failed")
     }.andThen {
       case _ => system.terminate()
@@ -46,7 +46,7 @@ object Client {
         .via(connectionFlow)
         .runWith(Sink.head)
     responseFuture.andThen {
-      case Success(x) => println(s"request succeded: $x")
+      case Success(x) => println(s"request succeeded: $x")
       case Failure(_) => println("request failed")
     }.andThen {
       case _ => system.terminate()
