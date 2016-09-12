@@ -22,7 +22,7 @@ class InMemoryLoanRepository(idGenerator: IdGenerator) extends LoanRepository {
 
   override def storeLoan(loanRequest: LoanRequest): Loan = {
     val loanId = LoanId(idGenerator.generateId())
-    val loan = Loan(loanId, loanRequest)
+    val loan = Loan(loanId, loanRequest.amount, loanRequest.durationInDays)
     loanStore.put(loanId.loanId, loan)
 //    offerStore.put(loanId.loanId, mutable.Map.empty)
     loan
