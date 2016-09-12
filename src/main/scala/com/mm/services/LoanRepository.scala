@@ -8,8 +8,8 @@ import scala.collection.mutable
 
 trait LoanRepository {
   def storeLoan(loanRequest: LoanRequest): Loan
-//  def getLoan(loanId: LoanId): Option[Loan]
-//
+  def getLoan(loanId: LoanId): Option[Loan]
+
 //  def storeOffer(loanId: LoanId, offer: OfferRequest): Offer
 //  def getOffers(loanId: LoanId): List[Offer]
 }
@@ -28,9 +28,9 @@ class InMemoryLoanRepository(idGenerator: IdGenerator) extends LoanRepository {
     loan
   }
 
-//  override def getLoan(loanId: LoanId): Option[Loan] =
-//    loanStore.get(loanId.loanId)
-//
+  override def getLoan(loanId: LoanId): Option[Loan] =
+    loanStore.get(loanId.loanId)
+
 //  def storeOffer(loanId: LoanId, offerRequest: OfferRequest): Offer = {
 //    val offerId = OfferId(idGenerator.generateId())
 //    val offer = Offer(offerId, loanId, offerRequest)
