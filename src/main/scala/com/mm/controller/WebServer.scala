@@ -9,7 +9,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives
 import akka.stream.ActorMaterializer
 import com.mm.model._
-import com.mm.services.{InMemoryLoanRepository, LoanRepository, RandomIdGenerator}
+import com.mm.services.{InMemoryLoanRepository, LoanRepository, LoanService, RandomIdGenerator}
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.Future
@@ -31,6 +31,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val offerIdFormat = jsonFormat1(OfferId)
   implicit val offerRequestFormat = jsonFormat2(OfferRequest)
   implicit val offerFormat = jsonFormat4(Offer)
+  implicit val currentOfferFormat = jsonFormat2(CurrentOffer)
 }
 
 object WebServer extends Directives with JsonSupport{
@@ -46,9 +47,9 @@ object WebServer extends Directives with JsonSupport{
     val loan = repo.getLoan(loanId)
     Future.successful(loan)
   }
-  def getCurrentOffer(loanId:LoanId)(implicit repo:LoanRepository):Future[List[Offer]] = {
-    val offers = repo.getOffers(loanId)
-    Future.successful(offers)
+  def getCurrentOffer(loanId:LoanId)(implicit repo:LoanRepository):Future[Option[CurrentOffer]] = {
+    val currentOffer = LoanService.getCurrentOffer(loanId)(repo)
+    Future.successful(currentOffer)
   }
 
   def main(args: Array[String]): Unit = {
@@ -100,11 +101,10 @@ object WebServer extends Directives with JsonSupport{
       } ~
       get {
         pathPrefix("loans" / JavaUUID / "offers" / "current"){ loanId =>
-          val maybeOffers:Future[List[Offer]] = getCurrentOffer(LoanId(loanId))
-          onComplete(maybeOffers) { _ match {
-              case Success(offers) => complete(offers)
-              case Failure(ex) => complete(StatusCodes.BadRequest)
-            }
+          val maybeOffer:Future[Option[CurrentOffer]] = getCurrentOffer(LoanId(loanId))
+          onSuccess(maybeOffer) {
+            case Some(currentOffer) => complete(currentOffer)
+            case None => complete(StatusCodes.NotFound)
           }
         }
       }
