@@ -14,6 +14,7 @@ import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 
 import scala.concurrent.Future
 import scala.io.StdIn
+import scala.util.{Failure, Success}
 
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
@@ -38,10 +39,6 @@ object WebServer extends Directives with JsonSupport{
     val loan = repo.getLoan(loanId)
     Future.successful(loan)
   }
-
-
-//  implicit val loanFormat = jsonFormat2(LoanRequest)
-
 
   def main(args: Array[String]): Unit = {
     implicit val system = ActorSystem("mm-actor-system")
@@ -69,8 +66,10 @@ object WebServer extends Directives with JsonSupport{
         pathPrefix("loans") {
           entity(as[LoanRequest]) { loanRequest =>
             val saved: Future[Loan] = saveLoan(loanRequest)
-            onComplete(saved) { x =>
-              complete(s"loan created: $x")
+            onComplete(saved) { _ match {
+                case Success(loan) => complete(loan)
+                case Failure(ex) => complete(StatusCodes.BadRequest)
+              }
             }
           }
         }
