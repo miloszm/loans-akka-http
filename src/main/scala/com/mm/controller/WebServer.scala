@@ -8,7 +8,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives
 import akka.stream.ActorMaterializer
-import com.mm.model.{Loan, LoanId, LoanRequest}
+import com.mm.model._
 import com.mm.services.{InMemoryLoanRepository, LoanRepository, RandomIdGenerator}
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 
@@ -28,12 +28,19 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val loanIdFormat = jsonFormat1(LoanId)
   implicit val loanRequestFormat = jsonFormat2(LoanRequest)
   implicit val loanFormat = jsonFormat3(Loan)
+  implicit val offerIdFormat = jsonFormat1(OfferId)
+  implicit val offerRequestFormat = jsonFormat2(OfferRequest)
+  implicit val offerFormat = jsonFormat4(Offer)
 }
 
 object WebServer extends Directives with JsonSupport{
   def saveLoan(loanRequest:LoanRequest)(implicit repo:LoanRepository):Future[Loan] = {
     val loan = repo.storeLoan(loanRequest)
     Future.successful(loan)
+  }
+  def saveOffer(loanId:LoanId, offerRequest:OfferRequest)(implicit repo:LoanRepository):Future[Offer] = {
+    val offer = repo.storeOffer(loanId, offerRequest)
+    Future.successful(offer)
   }
   def fetchLoan(loanId:LoanId)(implicit repo:LoanRepository):Future[Option[Loan]] = {
     val loan = repo.getLoan(loanId)
@@ -72,6 +79,19 @@ object WebServer extends Directives with JsonSupport{
               }
             }
           }
+        }
+      } ~
+      post {
+        pathPrefix("loans" / JavaUUID / "offer") { loanId => {
+          entity(as[OfferRequest]) { offerRequest =>
+            val saved: Future[Offer] = saveOffer(LoanId(loanId), offerRequest)
+            onComplete(saved) { _ match {
+                case Success(offer) => complete(offer)
+                case Failure(ex) => complete(StatusCodes.BadRequest)
+              }
+            }
+          }
+        }
         }
       }
 

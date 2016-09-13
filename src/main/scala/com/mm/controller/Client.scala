@@ -17,7 +17,8 @@ object Client {
 
   def main(args: Array[String]): Unit = {
 //     doHello(system)
-     doLoanCreation()
+//      doLoanCreation()
+      doOfferCreation()
     }
 
   def doLoanCreation(): Unit = {
@@ -31,13 +32,30 @@ object Client {
         .via(connectionFlow)
         .runWith(Sink.head)
     responseFuture.andThen {
-      case Success(x) => println(s"request succeeded: $x")
-      case Failure(_) => println("request failed")
+      case Success(x) => println(s"loan request succeeded: $x")
+      case Failure(_) => println("loan request failed")
     }.andThen {
       case _ => system.terminate()
     }
   }
 
+  def doOfferCreation(): Unit = {
+
+    val requestEntity = HttpEntity(ContentTypes.`application/json`,"{\"amount\": 90, \"interestRate\": 8}")
+
+    val connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
+      Http().outgoingConnection("127.0.0.1", 8080)
+    val responseFuture: Future[HttpResponse] =
+      Source.single(HttpRequest(method = HttpMethods.POST, uri = "/loans/6b3ee5d0-cf76-418d-960c-03de73a9086a/offers", entity=requestEntity))
+        .via(connectionFlow)
+        .runWith(Sink.head)
+    responseFuture.andThen {
+      case Success(x) => println(s"offer request succeeded: $x")
+      case Failure(_) => println("offer request failed")
+    }.andThen {
+      case _ => system.terminate()
+    }
+  }
 
   def doHello(): Unit = {
     val connectionFlow: Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]] =
