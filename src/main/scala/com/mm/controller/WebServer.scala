@@ -15,7 +15,10 @@ import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 import scala.concurrent.Future
 import scala.io.StdIn
 import scala.util.{Failure, Success}
+//import scala.concurrent.ExecutionContext.Implicits.global
 
+// Json4JackonSupport
+// json4s
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object UuidJsonFormat extends RootJsonFormat[UUID] {
