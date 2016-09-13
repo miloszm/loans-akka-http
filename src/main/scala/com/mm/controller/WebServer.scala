@@ -46,6 +46,10 @@ object WebServer extends Directives with JsonSupport{
     val loan = repo.getLoan(loanId)
     Future.successful(loan)
   }
+  def getCurrentOffer(loanId:LoanId)(implicit repo:LoanRepository):Future[List[Offer]] = {
+    val offers = repo.getOffers(loanId)
+    Future.successful(offers)
+  }
 
   def main(args: Array[String]): Unit = {
     implicit val system = ActorSystem("mm-actor-system")
@@ -82,7 +86,7 @@ object WebServer extends Directives with JsonSupport{
         }
       } ~
       post {
-        pathPrefix("loans" / JavaUUID / "offer") { loanId => {
+        pathPrefix("loans" / JavaUUID / "offers") { loanId => {
           entity(as[OfferRequest]) { offerRequest =>
             val saved: Future[Offer] = saveOffer(LoanId(loanId), offerRequest)
             onComplete(saved) { _ match {
@@ -93,7 +97,18 @@ object WebServer extends Directives with JsonSupport{
           }
         }
         }
+      } ~
+      get {
+        pathPrefix("loans" / JavaUUID / "offers" / "current"){ loanId =>
+          val maybeOffers:Future[List[Offer]] = getCurrentOffer(LoanId(loanId))
+          onComplete(maybeOffers) { _ match {
+              case Success(offers) => complete(offers)
+              case Failure(ex) => complete(StatusCodes.BadRequest)
+            }
+          }
+        }
       }
+
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 

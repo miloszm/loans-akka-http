@@ -11,7 +11,7 @@ trait LoanRepository {
   def getLoan(loanId: LoanId): Option[Loan]
 
   def storeOffer(loanId: LoanId, offer: OfferRequest): Offer
-//  def getOffers(loanId: LoanId): List[Offer]
+  def getOffers(loanId: LoanId): List[Offer]
 }
 
 
@@ -40,7 +40,7 @@ class InMemoryLoanRepository(idGenerator: IdGenerator) extends LoanRepository {
     offer
   }
 
-//  override def getOffers(loanId: LoanId): List[Offer] =
-//    offerStore.get(loanId.loanId).map(m => m.values.toList).getOrElse(List())
+  override def getOffers(loanId: LoanId): List[Offer] =
+    offerStore.get(loanId.loanId).map(m => m.values.toList).getOrElse(List())
 
 }
