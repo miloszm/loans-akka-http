@@ -1,24 +1,26 @@
 package com.mm
 
 import akka.actor.ActorSystem
-import akka.actor.Actor
-import akka.actor.Props
-import akka.testkit.{ TestActors, TestKit, ImplicitSender }
-import org.scalatest.WordSpecLike
-import org.scalatest.Matchers
-import org.scalatest.BeforeAndAfterAll
- 
-class WebServerSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
- 
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.testkit.TestKit
+import com.mm.controller.WebServer
+import org.scalatest.{Matchers, WordSpec}
+
+class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with ScalatestRouteTest {
+
   def this() = this(ActorSystem("MySpec"))
- 
+
   override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
- 
-  "WebServer" must {
-    "response with hello" in {
+
+
+  "The service" should {
+
+    "return a greeting for GET requests to the root path" in {
+      Get("/hello") ~> WebServer.route ~> check {
+        responseAs[String] shouldEqual "<h1>Hello Akka-Http</h1>"
+      }
     }
   }
 

@@ -52,13 +52,9 @@ object WebServer extends Directives with JsonSupport{
     Future.successful(currentOffer)
   }
 
-  def main(args: Array[String]): Unit = {
-    implicit val system = ActorSystem("mm-actor-system")
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
-    implicit val repo = new InMemoryLoanRepository(new RandomIdGenerator)
+  implicit val repo = new InMemoryLoanRepository(new RandomIdGenerator)
 
-    val route =
+  val route =
       get {
         pathPrefix("hello") {
             complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,"<h1>Hello Akka-Http</h1>"))
@@ -109,6 +105,10 @@ object WebServer extends Directives with JsonSupport{
         }
       }
 
+  def main(args: Array[String]): Unit = {
+    implicit val system = ActorSystem("mm-actor-system")
+    implicit val materializer = ActorMaterializer()
+    implicit val executionContext = system.dispatcher
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
