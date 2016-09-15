@@ -17,12 +17,10 @@ class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with Sc
   var loanId:Option[LoanId] = None
 
   override protected def beforeAll(): Unit = {
-    val request = LoanRequest(200.0, 365)
+    val request = LoanRequest(1000.0, 100)
 
     Post("/loans", request) ~> WebServer.route ~> check {
       val response = responseAs[Loan]
-      response.amount shouldEqual (200)
-      response.durationInDays shouldEqual (365)
       loanId = Some(response.loanId)
     }
 
@@ -54,15 +52,26 @@ class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with Sc
 
     "create offer for a loan with POST request to loans/loadid/offers" in {
 
-      val offerRequest = OfferRequest(100.0, 7.0)
+      val offerRequest = OfferRequest(100.0, 5.0)
 
       Post(s"/loans/${loanId.get.loanId.toString}/offers", offerRequest) ~> WebServer.route ~> check {
         val offer = responseAs[Offer]
         offer.amount shouldEqual (100)
-        offer.interestRate shouldEqual (7.0)
+        offer.interestRate shouldEqual (5.0)
         offer.loanId shouldEqual (loanId.get)
       }
     }
+
+    "get combined offer for a given loan" in {
+
+      Post(s"/loans/${loanId.get.loanId.toString}/offers", OfferRequest(500.0, 8.6)) ~> WebServer.route ~> check {}
+      Get(s"/loans/${loanId.get.loanId.toString}/offers/current") ~> WebServer.route ~> check {
+        val currentOffer = responseAs[CurrentOffer]
+        currentOffer.amount shouldEqual (600)
+        currentOffer.combinedInterest shouldEqual (8.0)
+      }
+    }
+
   }
 
 }
