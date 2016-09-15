@@ -1,6 +1,7 @@
 package com.mm
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.mm.controller.{JsonSupport, WebServer}
@@ -43,10 +44,18 @@ class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with Sc
     "return a loan for GET requests with loan id in the path" in {
 
       Get(s"/loan/${loanId.get.loanId.toString}") ~> WebServer.route ~> check {
+        status === StatusCodes.OK
         val loan = responseAs[Loan]
         loan.amount shouldEqual (1000)
         loan.durationInDays shouldEqual (100)
         loan.loanId shouldEqual (loanId.get)
+      }
+    }
+
+    "return status not found GET requests with non existing loan id in the path" in {
+
+      Get(s"/loan/52ffc0bf-f2bf-42da-a3fa-8e147f15b76a") ~> WebServer.route ~> check {
+        status === StatusCodes.NotFound
       }
     }
 

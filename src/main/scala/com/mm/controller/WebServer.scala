@@ -64,11 +64,15 @@ object WebServer extends Directives with JsonSupport{
       get {
         pathPrefix("loan" / JavaUUID){ loanId =>
           val maybeLoan:Future[Option[Loan]] = fetchLoan(LoanId(loanId))
-          onSuccess(maybeLoan) {
-            case Some(loan) => complete(loan)
-            case None => complete(StatusCodes.NotFound)
+          onComplete(maybeLoan) { _ match {
+              case Success(optionLoan) =>
+                optionLoan match {
+                  case Some(loan) => complete(loan)
+                  case None => complete(StatusCodes.NotFound)
+                }
+              case Failure(ex) => complete(StatusCodes.BadRequest)
+            }
           }
-
         }
       } ~
       post {
