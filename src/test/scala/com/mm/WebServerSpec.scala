@@ -4,20 +4,29 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestKit
 import com.mm.controller.{JsonSupport, WebServer}
-import com.mm.model.{Loan, LoanRequest}
-import org.json4s.ext.JavaTypesSerializers
-import org.json4s.{Formats, NoTypeHints}
-import org.json4s.jackson.Serialization
+import com.mm.model._
 import org.scalatest.{Matchers, WordSpec}
-//import org.json4s.ext
 
 
 
 
 class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
 
-//  implicit val json4sJacksonFormats: Formats = Serialization.formats(NoTypeHints) ++ JavaTypesSerializers.all
   def this() = this(ActorSystem("MySpec"))
+
+  var loanId:Option[LoanId] = None
+
+  override protected def beforeAll(): Unit = {
+    val request = LoanRequest(200.0, 365)
+
+    Post("/loans", request) ~> WebServer.route ~> check {
+      val response = responseAs[Loan]
+      response.amount shouldEqual (200)
+      response.durationInDays shouldEqual (365)
+      loanId = Some(response.loanId)
+    }
+
+  }
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
@@ -43,6 +52,17 @@ class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with Sc
       }
     }
 
+    "create offer for a loan with POST request to loans/loadid/offers" in {
+
+      val offerRequest = OfferRequest(100.0, 7.0)
+
+      Post(s"/loans/${loanId.get.loanId.toString}/offers", offerRequest) ~> WebServer.route ~> check {
+        val offer = responseAs[Offer]
+        offer.amount shouldEqual (100)
+        offer.interestRate shouldEqual (7.0)
+        offer.loanId shouldEqual (loanId.get)
+      }
+    }
   }
 
 }
