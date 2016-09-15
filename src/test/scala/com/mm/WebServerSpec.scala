@@ -34,8 +34,19 @@ class WebServerSpec(_system: ActorSystem) extends WordSpec with Matchers with Sc
   "The service" should {
 
     "return a greeting for GET requests to the root path" in {
-      Get("/hello") ~> WebServer.route ~> check {
-        responseAs[String] shouldEqual "<h1>Hello Akka-Http</h1>"
+
+      Get("/info") ~> WebServer.route ~> check {
+        responseAs[String] shouldEqual "<h1>peer to peer lending system</h1>"
+      }
+    }
+
+    "return a loan for GET requests with loan id in the path" in {
+
+      Get(s"/loan/${loanId.get.loanId.toString}") ~> WebServer.route ~> check {
+        val loan = responseAs[Loan]
+        loan.amount shouldEqual (1000)
+        loan.durationInDays shouldEqual (100)
+        loan.loanId shouldEqual (loanId.get)
       }
     }
 

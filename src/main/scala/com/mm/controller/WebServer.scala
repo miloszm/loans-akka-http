@@ -17,8 +17,6 @@ import scala.io.StdIn
 import scala.util.{Failure, Success}
 //import scala.concurrent.ExecutionContext.Implicits.global
 
-// Json4JackonSupport
-// json4s
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object UuidJsonFormat extends RootJsonFormat[UUID] {
@@ -59,8 +57,8 @@ object WebServer extends Directives with JsonSupport{
 
   val route =
       get {
-        pathPrefix("hello") {
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,"<h1>Hello Akka-Http</h1>"))
+        pathPrefix("info") {
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,"<h1>peer to peer lending system</h1>"))
         }
       } ~
       get {
